@@ -1,13 +1,14 @@
-import { Badge } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
  export const getDocumentStatusSummary = (documentos) => {
     if (!documentos || documentos.length === 0) return null;
+
     
     const statusCount = documentos.reduce((acc, doc) => {
       acc[doc.status] = (acc[doc.status] || 0) + 1;
       return acc;
     }, {});
-
+  
     return (
       <div className="flex gap-2 flex-wrap">
         {statusCount.pendente && (

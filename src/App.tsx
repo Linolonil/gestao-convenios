@@ -18,6 +18,7 @@ import DetalhesConvenio from "./components/convenio/DetalhesConvenio";
 import EditarConvenio from "./components/convenio/EditarConvenio";
 import NovoConvenio from "./components/convenio/NovoConvenio";
 import { BarraLateralApp } from "./components/layout/BarraLateralApp";
+import NotFound from "./components/layout/NotFound.tsx";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import { Button } from "./components/ui/button";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -25,7 +26,6 @@ import Convenios from "./pages/Convenios";
 import Dashboard from "./pages/Dashboard";
 import Documentos from "./pages/Documentos";
 import Login from "./pages/Login";
-import NotFound from "./pages/NotFound";
 import Parceiros from "./pages/Parceiros";
 import Usuarios from "./pages/Usuarios";
 
