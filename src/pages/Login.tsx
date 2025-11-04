@@ -1,15 +1,15 @@
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import logoOabCaaam from '@/assets/logo-oab-caaam.png';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { Lock, Mail, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { loginSchema, type LoginFormValues } from '@/lib/validations/auth';
-import logoOabCaaam from '@/assets/logo-oab-caaam.png';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2, Lock, Mail } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const { signIn } = useAuth();
@@ -42,23 +42,36 @@ const Login = () => {
         title: "Login realizado",
         description: "Bem-vindo ao sistema!",
       });
+      // navigate('/dashboard');
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-4">
-            <img 
-              src={logoOabCaaam} 
-              alt="Logo OAB Amazonas CAAAM" 
-              className="h-20 w-auto object-contain"
-            />
-          </div>
-          <CardTitle className="text-2xl text-center">Sistema de Convênios</CardTitle>
-          <CardDescription className="text-center">
-            Entre com suas credenciais para acessar o sistema
+    // 1. Container principal que ocupa a tela inteira e centraliza o conteúdo
+    <div className="min-h-screen w-full flex items-center justify-center p-4 relative">
+
+      {/* 2. Imagem de fundo e overlay */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/bg-login.png" // Certifique-se que a imagem está na pasta `public`
+          alt="Fundo do sistema de convênios"
+          className="h-full w-full object-cover filter grayscale"
+        />
+        {/* Overlay escuro para garantir contraste */}
+        <div className="absolute inset-0 bg-black/60" />
+      </div>
+
+      {/* 3. Card de Login, que fica na camada superior (z-10) */}
+      <Card className="w-full max-w-md z-10 bg-white/90 dark:bg-black/80 backdrop-blur-sm">
+        <CardHeader className="space-y-2 text-center">
+          <img
+            src={logoOabCaaam}
+            alt="Logo OAB Amazonas CAAAM"
+            className="h-20 w-auto object-contain mx-auto mb-4"
+          />
+          <CardTitle className="text-2xl">Sistema de Convênios</CardTitle>
+          <CardDescription>
+            Entre com suas credenciais para acessar
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -66,7 +79,7 @@ const Login = () => {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="email"
                   type="email"
@@ -80,11 +93,19 @@ const Login = () => {
                 <p className="text-sm text-destructive">{errors.email.message}</p>
               )}
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="senha">Senha</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="senha">Senha</Label>
+                <Link
+                  to="/esqueci-minha-senha"
+                  className="text-sm text-muted-foreground hover:text-primary"
+                >
+                  Esqueceu a senha?
+                </Link>
+              </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="senha"
                   type="password"

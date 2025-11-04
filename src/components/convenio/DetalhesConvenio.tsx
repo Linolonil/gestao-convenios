@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, FileText, Eye } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import { supabase } from "@/integrations/supabase/client";
+import { ArrowLeft, Eye } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import LoadingSpinner from "../layout/LoadingSpinner";
 
 const DetalhesConvenio = () => {
   const { id } = useParams();
@@ -48,7 +48,7 @@ const DetalhesConvenio = () => {
           )
         `,
         )
-        .eq("id_contrato", id)
+        .eq("id_contrato", parseInt(id))
         .single();
 
       if (convenioError) throw convenioError;
@@ -78,7 +78,7 @@ const DetalhesConvenio = () => {
           )
         `,
         )
-        .eq("id_contrato", id);
+        .eq("id_contrato", parseInt(id))
 
       if (servicosError) throw servicosError;
       setServicos(servicosData || []);
@@ -94,7 +94,7 @@ const DetalhesConvenio = () => {
           )
         `,
         )
-        .eq("id_contrato", id)
+        .eq("id_contrato", parseInt(id))
         .order("data_upload", { ascending: false });
 
       if (documentosError) throw documentosError;

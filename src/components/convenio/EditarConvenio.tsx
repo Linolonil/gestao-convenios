@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import FormularioConvenio from '../components/FormularioConvenio';
+import FormularioConvenio from './FormularioConvenio';
 
 const EditarConvenio = () => {
   const { id } = useParams();

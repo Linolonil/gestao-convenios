@@ -1,4 +1,4 @@
-import FormularioConvenio from '../components/FormularioConvenio';
+import FormularioConvenio from "./FormularioConvenio";
 
 const NovoConvenio = () => {
   return <FormularioConvenio />;

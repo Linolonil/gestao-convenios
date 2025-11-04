@@ -1,388 +1,194 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { Plus, Edit, Trash2, User, Shield, GraduationCap } from 'lucide-react';
+"use client";
 
-interface Usuario {
-  id: number;
-  nome: string;
-  email: string;
-  cpf: string;
-  senha: string;
-  ativo: boolean;
-  perfil: 'ADMIN' | 'ANALISTA' | 'ESTAGIARIO';
-  created_at: string;
-}
+import { Button } from "@/components/ui/button";
+import { UsuarioCard } from "@/components/usuarios/UsuarioCard";
+import { UsuarioDeleteDialog } from "@/components/usuarios/UsuarioDeleteDialog";
+import { UsuarioFormDialog } from "@/components/usuarios/UsuarioFormDialog";
+import { toast } from "@/hooks/use-toast";
+import { useUsuarios, Usuario } from "@/hooks/useUsuarios";
+import { supabase } from "@/integrations/supabase/client";
+import { UsuarioFormData } from "@/types/usuarios";
+import { Plus } from "lucide-react";
+import { useState } from "react";
 
-const Usuarios = () => {
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showDialog, setShowDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [editingUsuario, setEditingUsuario] = useState<Usuario | null>(null);
-  const [usuarioToDelete, setUsuarioToDelete] = useState<Usuario | null>(null);
-  const { toast } = useToast();
+const UsuariosPage = () => {
+  const { usuarios, loading, fetchUsuarios } = useUsuarios();
 
-  const [formData, setFormData] = useState({
-    nome: '',
-    email: '',
-    cpf: '',
-    senha: '',
-    perfil: 'ESTAGIARIO' as 'ADMIN' | 'ANALISTA' | 'ESTAGIARIO',
+  const [formData, setFormData] = useState<UsuarioFormData>({
+    nome: "",
+    email: "",
+    senha: "",
+    perfil: "ESTAGIARIO",
     ativo: true,
   });
 
-  useEffect(() => {
-    fetchUsuarios();
-  }, []);
-
-  const fetchUsuarios = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('usuarios')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      const mapped = (data || []).map(u => ({
-        id: u.id_usuario,
-        nome: u.nome,
-        email: u.email,
-        cpf: '', // CPF não existe na tabela
-        senha: u.senha,
-        ativo: u.ativo,
-        perfil: u.perfil,
-        created_at: u.created_at
-      }));
-      setUsuarios(mapped);
-    } catch (error) {
-      console.error('Error fetching usuarios:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar usuários",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const openCreateDialog = () => {
-    setEditingUsuario(null);
-    setFormData({
-      nome: '',
-      email: '',
-      cpf: '',
-      senha: '',
-      perfil: 'ESTAGIARIO',
-      ativo: true,
-    });
-    setShowDialog(true);
-  };
-
-  const openEditDialog = (usuario: Usuario) => {
-    setEditingUsuario(usuario);
-    setFormData({
-      nome: usuario.nome,
-      email: usuario.email,
-      cpf: usuario.cpf,
-      senha: usuario.senha,
-      perfil: usuario.perfil,
-      ativo: usuario.ativo,
-    });
-    setShowDialog(true);
-  };
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [selectedUsuario, setSelectedUsuario] = useState<Usuario | null>(null);
 
   const handleSave = async () => {
-    if (!formData.nome || !formData.email || !formData.cpf || !formData.senha) {
+    if (!formData.nome || !formData.email || !formData.senha) {
       toast({
         title: "Campos obrigatórios",
-        description: "Preencha todos os campos",
+        description: "Preencha todos os campos antes de salvar.",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      if (editingUsuario) {
+      if (selectedUsuario) {
         const { error } = await supabase
-          .from('usuarios')
+          .from("usuarios")
           .update({
             nome: formData.nome,
             email: formData.email,
             senha: formData.senha,
             perfil: formData.perfil,
-            ativo: formData.ativo
+            ativo: formData.ativo,
           })
-          .eq('id_usuario', editingUsuario.id);
+          .eq("id_usuario", selectedUsuario.id);
 
         if (error) throw error;
 
         toast({
           title: "Usuário atualizado",
-          description: "Usuário atualizado com sucesso",
+          description: `O usuário ${formData.nome} foi atualizado com sucesso.`,
         });
       } else {
-        const { error } = await supabase
-          .from('usuarios')
-          .insert({
-            nome: formData.nome,
-            email: formData.email,
-            senha: formData.senha,
-            perfil: formData.perfil,
-            ativo: formData.ativo
-          });
+        const { error } = await supabase.from("usuarios").insert({
+          nome: formData.nome,
+          email: formData.email,
+          senha: formData.senha,
+          perfil: formData.perfil,
+          ativo: formData.ativo,
+        });
 
         if (error) throw error;
 
         toast({
           title: "Usuário criado",
-          description: "Novo usuário criado com sucesso",
+          description: `O usuário ${formData.nome} foi criado com sucesso.`,
         });
       }
 
-      setShowDialog(false);
-      fetchUsuarios();
+      // Atualiza lista e fecha modal
+      await fetchUsuarios();
+      setIsFormOpen(false);
+      setSelectedUsuario(null);
     } catch (error: any) {
       toast({
-        title: "Erro",
-        description: error.message || "Erro ao salvar usuário",
+        title: "Erro ao salvar",
+        description: error.message || "Não foi possível salvar o usuário.",
         variant: "destructive",
       });
     }
   };
 
-  const openDeleteDialog = (usuario: Usuario) => {
-    setUsuarioToDelete(usuario);
-    setShowDeleteDialog(true);
-  };
-
-  const confirmDelete = async () => {
-    if (!usuarioToDelete) return;
+  // --- EXCLUIR usuário
+  const handleDelete = async () => {
+    if (!selectedUsuario) return;
 
     try {
       const { error } = await supabase
-        .from('usuarios')
+        .from("usuarios")
         .delete()
-        .eq('id_usuario', usuarioToDelete.id);
+        .eq("id_usuario", selectedUsuario.id);
 
       if (error) throw error;
 
       toast({
         title: "Usuário excluído",
-        description: "Usuário excluído com sucesso",
+        description: `O usuário ${selectedUsuario.nome} foi removido.`,
       });
 
-      fetchUsuarios();
-    } catch (error) {
+      await fetchUsuarios();
+      setIsDeleteOpen(false);
+      setSelectedUsuario(null);
+    } catch (error: any) {
       toast({
-        title: "Erro",
-        description: "Erro ao excluir usuário",
+        title: "Erro ao excluir",
+        description: error.message || "Não foi possível excluir o usuário.",
         variant: "destructive",
       });
     }
-
-    setShowDeleteDialog(false);
-    setUsuarioToDelete(null);
   };
-
-  const getPerfilIcon = (perfil: string) => {
-    switch (perfil) {
-      case 'ADMIN':
-        return <Shield className="w-4 h-4" />;
-      case 'ANALISTA':
-        return <User className="w-4 h-4" />;
-      case 'ESTAGIARIO':
-        return <GraduationCap className="w-4 h-4" />;
-      default:
-        return <User className="w-4 h-4" />;
-    }
-  };
-
-  const getPerfilVariant = (perfil: string) => {
-    switch (perfil) {
-      case 'ADMIN':
-        return 'destructive';
-      case 'ANALISTA':
-        return 'default';
-      case 'ESTAGIARIO':
-        return 'secondary';
-      default:
-        return 'outline';
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/4"></div>
-          <div className="h-32 bg-muted rounded"></div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="p-6 space-y-6">
+      {/* Cabeçalho */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Gerenciar Usuários</h1>
-          <p className="text-muted-foreground">Adicione, edite ou remova usuários do sistema</p>
+          <p className="text-muted-foreground">
+            Adicione, edite ou remova usuários
+          </p>
         </div>
-        <Button onClick={openCreateDialog}>
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Usuário
+        <Button
+          onClick={() => {
+            setSelectedUsuario(null);
+            setFormData({
+              nome: "",
+              email: "",
+              senha: "",
+              perfil: "ESTAGIARIO",
+              ativo: true,
+            });
+            setIsFormOpen(true);
+          }}
+        >
+          <Plus className="w-4 h-4 mr-2" /> Novo Usuário
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {usuarios.map((usuario) => (
-          <Card key={usuario.id}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                <div className="flex items-center gap-2">
-                  {getPerfilIcon(usuario.perfil)}
-                  {usuario.nome}
-                </div>
-              </CardTitle>
-              <Badge variant={getPerfilVariant(usuario.perfil)}>
-                {usuario.perfil}
-              </Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-1 mb-4">
-                <p className="text-muted-foreground">{usuario.email}</p>
-                <p className="text-muted-foreground">{usuario.cpf}</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge variant={usuario.ativo ? 'default' : 'secondary'}>
-                    {usuario.ativo ? 'Ativo' : 'Inativo'}
-                  </Badge>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => openEditDialog(usuario)} className="flex-1">
-                  <Edit className="w-4 h-4 mr-1" />
-                  Editar
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => openDeleteDialog(usuario)}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Lista */}
+      {loading ? (
+        <p>Carregando...</p>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {usuarios.map((u) => (
+            <UsuarioCard
+              key={u.id}
+              usuario={u}
+              onEdit={(usr) => {
+                setSelectedUsuario(usr);
+                setFormData({
+                  nome: usr.nome,
+                  email: usr.email,
+                  senha: usr.senha,
+                  perfil: usr.perfil,
+                  ativo: usr.ativo,
+                });
+                setIsFormOpen(true);
+              }}
+              onDelete={(usr) => {
+                setSelectedUsuario(usr);
+                setIsDeleteOpen(true);
+              }}
+            />
+          ))}
+        </div>
+      )}
 
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {editingUsuario ? 'Editar Usuário' : 'Novo Usuário'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="nome">Nome</Label>
-              <Input
-                id="nome"
-                value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                placeholder="Nome completo"
-              />
-            </div>
+      {/* Diálogo de Formulário */}
+      <UsuarioFormDialog
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        formData={formData}
+        setFormData={setFormData}
+        onSave={handleSave}
+        isEditing={!!selectedUsuario}
+      />
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="email@exemplo.com"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="cpf">CPF</Label>
-              <Input
-                id="cpf"
-                value={formData.cpf}
-                onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-                placeholder="000.000.000-00"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="senha">Senha</Label>
-              <Input
-                id="senha"
-                type="password"
-                value={formData.senha}
-                onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
-                placeholder="••••••••"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="perfil">Perfil</Label>
-              <Select value={formData.perfil} onValueChange={(value: any) => setFormData({ ...formData, perfil: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ADMIN">Administrador</SelectItem>
-                  <SelectItem value="ANALISTA">Analista</SelectItem>
-                  <SelectItem value="ESTAGIARIO">Estagiário</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="ativo">Usuário Ativo</Label>
-              <Switch
-                id="ativo"
-                checked={formData.ativo}
-                onCheckedChange={(checked) => setFormData({ ...formData, ativo: checked })}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave}>
-              Salvar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir usuário?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir "{usuarioToDelete?.nome}"? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>Excluir</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Diálogo de Exclusão */}
+      <UsuarioDeleteDialog
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        usuarioNome={selectedUsuario?.nome}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 };
 
-export default Usuarios;
+export default UsuariosPage;

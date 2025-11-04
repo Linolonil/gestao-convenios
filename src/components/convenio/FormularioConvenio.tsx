@@ -1,17 +1,18 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { FormularioDadosParceiroValidado } from './convenio/FormularioDadosParceiroValidado';
-import { FormularioServicos } from './convenio/FormularioServicos';
-import { FormularioDocumentos } from './convenio/FormularioDocumentos';
 import { parceiroDadosSchema } from '@/lib/validations/parceiro';
 import { servicosArraySchema } from '@/lib/validations/servico';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FormularioDadosParceiroValidado } from './FormularioDadosParceiroValidado';
+import { FormularioDocumentos } from './FormularioDocumentos';
+import { FormularioServicos } from './FormularioServicos';
+
 
 interface ConvenioFormProps {
   convenioId?: number;

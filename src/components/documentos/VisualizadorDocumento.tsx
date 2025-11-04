@@ -1,14 +1,15 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Eye, FileText, CheckCircle, MessageCircle, Upload } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import DialogoSolicitarCorrecao from "./DialogoSolicitarCorrecao";
+import { supabase } from "@/integrations/supabase/client";
+import { CheckCircle, Eye, FileText, MessageCircle } from "lucide-react";
+import { useState } from "react";
+import { DialogComentarios } from "./DialogComentarios";
 import DialogoRejeitarDocumento from "./DialogoRejeitarDocumento";
-import SecaoComentarios from "./SecaoComentarios";
-import { Input } from "@/components/ui/input";
+import DialogoSolicitarCorrecao from "./DialogoSolicitarCorrecao";
+import { DialogReenvio } from "./DialogReenvio";
+import { DialogViewer } from "./DialogViewer";
+
 
 interface Documento {
   id_documento: number;
@@ -298,110 +299,33 @@ const VisualizadorDocumento = ({ documento, canApprove, usuarioId, onStatusChang
         </div>
       </div>
 
-      <Dialog open={isViewerOpen} onOpenChange={setIsViewerOpen}>
-        <DialogContent className="max-w-5xl h-[90vh]">
-          <DialogHeader>
-            <DialogTitle>{documento.nome}</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-hidden">
-            {isImage && (
-              <img 
-                src={documentUrl} 
-                alt={documento.nome}
-                className="w-full h-full object-contain"
-              />
-            )}
-            {isPdf && (
-              <iframe
-                src={documentUrl}
-                className="w-full h-full border-0"
-                title={documento.nome}
-              />
-            )}
-            {!isImage && !isPdf && (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-muted-foreground">
-                  Formato não suportado para visualização inline. 
-                  <a 
-                    href={documentUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-primary underline ml-1"
-                  >
-                    Abrir em nova aba
-                  </a>
-                </p>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <DialogViewer
+        open={isViewerOpen}
+        onOpenChange={setIsViewerOpen}
+        nome={documento.nome}
+        url={documentUrl}
+        type={isImage ? "image" : isPdf ? "pdf" : "other"}
+      />
 
-      <Dialog open={isCommentsOpen} onOpenChange={setIsCommentsOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Comentários - {documento.nome}</DialogTitle>
-          </DialogHeader>
-          <SecaoComentarios documentoId={documento.id_documento} usuarioId={usuarioId} />
-        </DialogContent>
-      </Dialog>
+      <DialogComentarios
+        open={isCommentsOpen}
+        onOpenChange={setIsCommentsOpen}
+        documentoId={documento.id_documento}
+        usuarioId={usuarioId}
+        nomeDocumento={documento.nome}
+      />
 
-      <Dialog open={isReenvioOpen} onOpenChange={setIsReenvioOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Reenviar Documento</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="p-3 bg-muted rounded-lg">
-              <p className="text-sm font-medium">Documento atual:</p>
-              <p className="text-sm text-muted-foreground">{documento.nome}</p>
-              {documento.motivo_rejeicao && (
-                <div className="mt-2">
-                  <p className="text-sm font-medium text-destructive">Motivo:</p>
-                  <p className="text-sm text-muted-foreground">{documento.motivo_rejeicao}</p>
-                </div>
-              )}
-            </div>
+      <DialogReenvio
+        open={isReenvioOpen}
+        onOpenChange={setIsReenvioOpen}
+        documentoNome={documento.nome}
+        motivoRejeicao={documento.motivo_rejeicao}
+        novoArquivo={novoArquivo}
+        setNovoArquivo={setNovoArquivo}
+        isLoading={isLoading}
+        onEnviar={handleReenviarDocumento}
+      />
 
-            <div className="space-y-2">
-              <label htmlFor="novo-arquivo" className="text-sm font-medium">
-                Selecionar novo arquivo
-              </label>
-              <Input
-                id="novo-arquivo"
-                type="file"
-                onChange={(e) => setNovoArquivo(e.target.files?.[0] || null)}
-                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-              />
-              {novoArquivo && (
-                <p className="text-xs text-muted-foreground">
-                  Arquivo selecionado: {novoArquivo.name}
-                </p>
-              )}
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setIsReenvioOpen(false);
-                  setNovoArquivo(null);
-                }}
-                disabled={isLoading}
-              >
-                Cancelar
-              </Button>
-              <Button 
-                onClick={handleReenviarDocumento}
-                disabled={isLoading || !novoArquivo}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                {isLoading ? "Enviando..." : "Enviar"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };
